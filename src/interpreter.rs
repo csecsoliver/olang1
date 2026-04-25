@@ -1,5 +1,5 @@
 use crate::ast::{Expr, Op, Statement};
-use std::{collections::HashMap, fmt::write};
+use std::{collections::HashMap};
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -137,7 +137,7 @@ impl Interpreter {
                 match val {
                     Value::Number(n) => {
                         if n.floor() == n && n >= 1.0 {
-                            self.skip_next +=1;
+                            self.skip_next +=n.floor() as i64;
                             Ok(None)
                         } else {
                             Err(format!("Skip argument has to be an integer"))
