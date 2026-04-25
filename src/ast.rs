@@ -24,8 +24,11 @@ pub enum Statement {
     Puts(Expr),
     Assign(String, Expr),
     If(Expr, Vec<Statement>, Option<Vec<Statement>>),
+    Unless(Expr, Vec<Statement>, Option<Vec<Statement>>),
     While(Expr, Vec<Statement>),
     Def(String, Vec<String>, Vec<Statement>),
     Return(Expr),
+    Done(),
+    Skip(Expr),
     ExprStatement(Expr),
 }   

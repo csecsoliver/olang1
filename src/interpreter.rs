@@ -34,6 +34,7 @@ struct Function {
 pub struct Interpreter {
     variables: HashMap<String, Value>,
     functions: HashMap<String, Function>,
+    skip_next: i64
 }
 
 impl Interpreter {
@@ -41,6 +42,7 @@ impl Interpreter {
         Self {
             variables: HashMap::new(),
             functions: HashMap::new(),
+            skip_next: 0,
         }
     }
     pub fn run(&mut self, program: Vec<Statement>) -> Result<(), String> {
@@ -50,6 +52,10 @@ impl Interpreter {
         Ok(())
     }
     fn exec_statement(&mut self, stmt: &Statement) -> Result<Option<Value>, String> {
+        if self.skip_next >= 1 {
+            self.skip_next-=1;
+            return Ok(None);
+        }
         match stmt {
             Statement::Puts(expr) => {
                 let val = self.eval_expr(expr)?;
@@ -64,6 +70,23 @@ impl Interpreter {
             Statement::If(cond, body, else_body) => {
                 let val = self.eval_expr(cond)?;
                 if self.is_truthy(&val) {
+                    for s in body {
+                        if let Some(ret) = self.exec_statement(s)? {
+                            return Ok(Some(ret));
+                        }
+                    }
+                } else if let Some(else_stmts) = else_body {
+                    for s in else_stmts {
+                        if let Some(ret) = self.exec_statement(s)? {
+                            return Ok(Some(ret));
+                        }
+                    }
+                }
+                Ok(None)
+            }
+            Statement::Unless(cond, body, else_body) => {
+                let val = self.eval_expr(cond)?;
+                if !self.is_truthy(&val) {
                     for s in body {
                         if let Some(ret) = self.exec_statement(s)? {
                             return Ok(Some(ret));
@@ -105,6 +128,24 @@ impl Interpreter {
             Statement::Return(expr) => {
                 let val = self.eval_expr(expr)?;
                 Ok(Some(val))
+            }
+            Statement::Done() => {
+                Ok(Some(Value::Nil))
+            }
+            Statement::Skip(expr) =>{
+                let val = self.eval_expr(expr)?;
+                match val {
+                    Value::Number(n) => {
+                        if n.floor() == n && n >= 1.0 {
+                            self.skip_next +=1;
+                            Ok(None)
+                        } else {
+                            Err(format!("Skip argument has to be an integer"))
+                        }
+                    }
+                    _ => Err(format!("Skip needs a number argument"))
+                    
+                }
             }
             Statement::ExprStatement(expr) => {
                 self.eval_expr(expr)?;
