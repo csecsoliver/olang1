@@ -2,6 +2,8 @@
 name = "olang1"
 version = "0.1.0"
 edition = "2024"
+description = "Basic language, with some fun keywords"
+license = "MIT"
 
 [build-dependencies]
 lalrpop = "0.23.1"
